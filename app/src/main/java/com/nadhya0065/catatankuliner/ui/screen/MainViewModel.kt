@@ -16,20 +16,21 @@ class MainViewModel : ViewModel(){
     var data = mutableStateOf(emptyList<Kuliner>())
         private set
 
-    var status = MutableStateFlow(ApiStatus.Loading)
+    var status = MutableStateFlow(ApiStatus.LOADING)
         private set
 
     init {
         retriveData()
     }
-    private fun retriveData(){
+    fun retriveData(){
         viewModelScope.launch(Dispatchers.IO) {
-            status.value = ApiStatus.Loading
+            status.value = ApiStatus.LOADING
             try {
                 data.value = KulinerApi.service.getKuliner()
-                status.value = ApiStatus.Success
+                status.value = ApiStatus.SUCCESS
             } catch (e: Exception){
                 Log.d("MainViewModel", "Failure: ${e.message}")
+                status.value = ApiStatus.FAILED
             }
         }
     }

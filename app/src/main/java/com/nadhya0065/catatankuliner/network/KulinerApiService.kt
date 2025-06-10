@@ -32,4 +32,4 @@ object KulinerApi{
         return "$BASE_URL$imageId.jpg"
     }
 }
-enum class ApiStatus {Loading, Success}
+enum class ApiStatus {LOADING, SUCCESS, FAILED}
