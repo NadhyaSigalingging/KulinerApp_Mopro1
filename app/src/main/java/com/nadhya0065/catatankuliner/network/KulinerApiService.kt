@@ -28,4 +28,7 @@ object KulinerApi{
     val service:KulinerApiService by lazy {
         retrofit.create(KulinerApiService::class.java)
     }
+    fun getKulinerUrl(imageId: String): String{
+        return "$BASE_URL$imageId.jpg"
+    }
 }
