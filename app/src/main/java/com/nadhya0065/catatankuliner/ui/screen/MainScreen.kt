@@ -1,8 +1,10 @@
 package com.nadhya0065.catatankuliner.ui.screen
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,13 +19,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -70,7 +76,8 @@ fun ScreenContent( modifier: Modifier = Modifier){
 @Composable
 fun ListItem(kuliner: Kuliner){
     Box(
-        modifier = Modifier.padding(4.dp).border(1.dp, Color.Gray)
+        modifier = Modifier.padding(4.dp).border(1.dp, Color.Gray),
+        contentAlignment = Alignment.BottomCenter
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
@@ -81,9 +88,30 @@ fun ListItem(kuliner: Kuliner){
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxWidth().padding(4.dp)
         )
+        Column (
+            modifier = Modifier.fillMaxWidth().padding(4.dp)
+                .background(Color(red = 0f, green = 0f, blue = 0f, alpha = 0.5f,))
+        ) {
+            Text(
+                text = kuliner.nama_makanan,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Text(
+                text = kuliner.lokasi,
+                fontStyle = FontStyle.Italic,
+                fontSize = 14.sp,
+                color = Color.White
+            )
+            Text(
+                text = kuliner.review,
+                fontStyle = FontStyle.Italic,
+                fontSize = 14.sp,
+                color = Color.White
+            )
+        }
     }
 }
-
 
 @Preview(showBackground = true)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
