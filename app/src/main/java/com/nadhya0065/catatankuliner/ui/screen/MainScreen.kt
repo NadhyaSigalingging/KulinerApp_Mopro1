@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -96,6 +97,7 @@ fun MainScreen(){
     var showDialog by remember { mutableStateOf(false) }
     var showKulinerDialog by remember { mutableStateOf(false) }
 
+
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val launcher = rememberLauncherForActivityResult(CropImageContract()) {
         bitmap = getCroppedImage(context.contentResolver,it)
@@ -149,7 +151,8 @@ fun MainScreen(){
             }
         }
     ) { innerPadding ->
-        ScreenContent(viewModel,user.email,Modifier.padding(innerPadding))
+        ScreenContent(viewModel, user.email, Modifier.padding(innerPadding))
+    }
         if (showDialog){
             ProfilDialog(
                 user = user,
@@ -172,15 +175,27 @@ fun MainScreen(){
         }
     }
 
-}
 
 @Composable
-fun ScreenContent( viewModel: MainViewModel,userId: String,modifier: Modifier = Modifier){
+fun ScreenContent(viewModel: MainViewModel,userId: String, modifier: Modifier = Modifier)
+{
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var seletedKuliner by remember { mutableStateOf<Kuliner?>(null) }
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
 
     LaunchedEffect (userId) {
         viewModel.retriveData(userId)
+    }
+
+    if (showDeleteDialog && seletedKuliner != null){
+        DialogHapus(
+            onDismiss = {showDeleteDialog = false},
+            onConfirm = {
+                viewModel.deleteData(seletedKuliner!!.id,userId)
+                showDeleteDialog = false
+            }
+        )
     }
 
     when (status) {
@@ -198,7 +213,12 @@ fun ScreenContent( viewModel: MainViewModel,userId: String,modifier: Modifier = 
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                items(data) { ListItem(kuliner = it) }
+                items(data) { kuliner ->
+                    ListItem(kuliner = kuliner, onDeleteClicked ={seleted ->
+                        seletedKuliner = seleted
+                        showDeleteDialog = true
+                    })
+                }
             }
         }
         ApiStatus.FAILED -> {
@@ -221,7 +241,7 @@ fun ScreenContent( viewModel: MainViewModel,userId: String,modifier: Modifier = 
 }
 
 @Composable
-fun ListItem(kuliner: Kuliner){
+fun ListItem(kuliner: Kuliner, onDeleteClicked: (Kuliner) -> Unit){
     Box(
         modifier = Modifier.padding(4.dp).border(1.dp, Color.Gray),
         contentAlignment = Alignment.BottomCenter
@@ -259,6 +279,18 @@ fun ListItem(kuliner: Kuliner){
                 color = Color.White
             )
         }
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            IconButton(onClick = { onDeleteClicked(kuliner) }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = stringResource(R.string.hapus),
+                    tint = Color.White
+                )
+            }
+        }
+
     }
 }
 
