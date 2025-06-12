@@ -66,6 +66,7 @@ fun ProfilDialog(
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(top = 16.dp)
                 )
+
                 Text(
                     text = user.email,
                     maxLines = 1,

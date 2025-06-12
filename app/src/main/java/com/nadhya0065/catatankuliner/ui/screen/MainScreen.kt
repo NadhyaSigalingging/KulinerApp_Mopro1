@@ -181,7 +181,7 @@ fun ListItem(kuliner: Kuliner){
         )
         Column (
             modifier = Modifier.fillMaxWidth().padding(4.dp)
-                .background(Color(red = 0f, green = 0f, blue = 0f, alpha = 0.5f,))
+                .background(Color(red = 0f, green = 0f, blue = 0f, alpha = 0.5f))
         ) {
             Text(
                 text = kuliner.nama_makanan,
