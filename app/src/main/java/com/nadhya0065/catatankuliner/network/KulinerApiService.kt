@@ -1,11 +1,18 @@
 package com.nadhya0065.catatankuliner.network
 
 import com.nadhya0065.catatankuliner.model.Kuliner
+import com.nadhya0065.catatankuliner.model.OpStatus
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Multipart
+import retrofit2.http.POST
+import retrofit2.http.Part
 
 
 private const val BASE_URL = "https://store.sthresearch.site/"
@@ -22,6 +29,16 @@ private val retrofit = Retrofit.Builder()
 interface KulinerApiService {
     @GET("food_review.php")
     suspend fun getKuliner(): List<Kuliner>
+
+    @Multipart
+    @POST ("food_review.php")
+    suspend fun postKuliner(
+        @Header("Authorization") userId: String,
+        @Part("nama_kuliner") namakuliner: RequestBody,
+        @Part("lokasi") lokasi: RequestBody,
+        @Part("review") review: RequestBody,
+        @Part image: MultipartBody.Part
+    ):OpStatus
 }
 
 object KulinerApi{
