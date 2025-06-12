@@ -26,14 +26,11 @@ class MainViewModel : ViewModel(){
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    init {
-        retriveData()
-    }
-    fun retriveData(){
+    fun retriveData(userId: String){
         viewModelScope.launch(Dispatchers.IO) {
             status.value = ApiStatus.LOADING
             try {
-                data.value = KulinerApi.service.getKuliner()
+                data.value = KulinerApi.service.getKuliner(userId)
                 status.value = ApiStatus.SUCCESS
             } catch (e: Exception){
                 Log.d("MainViewModel", "Failure: ${e.message}")
@@ -41,18 +38,18 @@ class MainViewModel : ViewModel(){
             }
         }
     }
-    fun saveData(userId: String,namakuliner:String,lokasi: String,review: String,bitmap: Bitmap){
+    fun saveData(userId: String,nama_makanan:String,lokasi: String,review: String,bitmap: Bitmap){
         viewModelScope.launch (Dispatchers.IO){
             try {
                 val result = KulinerApi.service.postKuliner(
                     userId,
-                    namakuliner.toRequestBody("text/plain".toMediaTypeOrNull()),
+                    nama_makanan.toRequestBody("text/plain".toMediaTypeOrNull()),
                     lokasi.toRequestBody("text/plain".toMediaTypeOrNull()),
                     review.toRequestBody("text/plain".toMediaTypeOrNull()),
                     bitmap.toMultipartBody()
                 )
                 if (result.status == "Succes")
-                    retriveData()
+                    retriveData(userId)
                 else
                     throw Exception(result.message)
             }catch (e: Exception){
@@ -61,17 +58,17 @@ class MainViewModel : ViewModel(){
             }
         }
     }
-    
-    private fun Bitmap.toMultipartBody(): MultipartBody.Part{
+
+    private fun Bitmap.toMultipartBody(): MultipartBody.Part {
         val stream = ByteArrayOutputStream()
-        compress(Bitmap.CompressFormat.JPEG,80,stream)
+        compress(Bitmap.CompressFormat.JPEG, 80, stream)
         val byteArray = stream.toByteArray()
         val requestBody = byteArray.toRequestBody(
-            "image/jpg".toMediaTypeOrNull(),0,byteArray.size)
+            "image/jpg".toMediaTypeOrNull(), 0, byteArray.size)
         return MultipartBody.Part.createFormData(
-            "image","image.jpg",requestBody
+            "image", "image.jpg", requestBody
         )
     }
-    fun cleareMassage(){errorMessage.value = null}
 
+    fun clearMessage() { errorMessage.value=null}
 }

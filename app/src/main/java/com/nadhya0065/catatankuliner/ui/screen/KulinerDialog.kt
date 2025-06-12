@@ -75,7 +75,7 @@ fun KulinerDialog(
                     maxLines = 1,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.Sentences,
-                        imeAction = ImeAction.Done
+                        imeAction = ImeAction.Next
                     ),
                     modifier = Modifier.padding(top = 8.dp)
 

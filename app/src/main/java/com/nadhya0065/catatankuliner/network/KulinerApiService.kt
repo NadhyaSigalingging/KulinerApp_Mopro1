@@ -28,13 +28,15 @@ private val retrofit = Retrofit.Builder()
 
 interface KulinerApiService {
     @GET("food_review.php")
-    suspend fun getKuliner(): List<Kuliner>
+    suspend fun getKuliner(
+        @Header("Authorization")userId: String
+    ): List<Kuliner>
 
     @Multipart
     @POST ("food_review.php")
     suspend fun postKuliner(
         @Header("Authorization") userId: String,
-        @Part("nama_kuliner") namakuliner: RequestBody,
+        @Part("nama_makanan") nama_makanan: RequestBody,
         @Part("lokasi") lokasi: RequestBody,
         @Part("review") review: RequestBody,
         @Part image: MultipartBody.Part

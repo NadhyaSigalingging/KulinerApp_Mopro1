@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -148,7 +149,7 @@ fun MainScreen(){
             }
         }
     ) { innerPadding ->
-        ScreenContent(viewModel,Modifier.padding(innerPadding))
+        ScreenContent(viewModel,user.email,Modifier.padding(innerPadding))
         if (showDialog){
             ProfilDialog(
                 user = user,
@@ -160,23 +161,27 @@ fun MainScreen(){
         if (showKulinerDialog){
             KulinerDialog(
                 bitmap = bitmap,
-                onDismissRequest = {showKulinerDialog = false}) {nama_kuliner,lokasi,review ->
-                viewModel.saveData(user.email,nama_kuliner,lokasi,review,bitmap!!)
+                onDismissRequest = {showKulinerDialog = false}) {nama_makanan,lokasi,review ->
+                viewModel.saveData(user.email,nama_makanan,lokasi,review,bitmap!!)
                 showKulinerDialog = false
             }
         }
         if (errorMessage != null){
             Toast.makeText(context,errorMessage,Toast.LENGTH_LONG).show()
-            viewModel.cleareMassage()
+            viewModel.clearMessage()
         }
     }
 
 }
 
 @Composable
-fun ScreenContent( viewModel: MainViewModel,modifier: Modifier = Modifier){
+fun ScreenContent( viewModel: MainViewModel,userId: String,modifier: Modifier = Modifier){
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
+
+    LaunchedEffect (userId) {
+        viewModel.retriveData(userId)
+    }
 
     when (status) {
         ApiStatus.LOADING -> {
@@ -204,7 +209,7 @@ fun ScreenContent( viewModel: MainViewModel,modifier: Modifier = Modifier){
             ){
                 Text(text = stringResource(id = R.string.error))
                 Button(
-                    onClick = {viewModel.retriveData()},
+                    onClick = {viewModel.retriveData(userId)},
                     modifier = Modifier.padding(top = 16.dp),
                     contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
                 ) {
