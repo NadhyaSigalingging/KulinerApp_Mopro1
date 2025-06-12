@@ -144,7 +144,7 @@ fun MainScreen(){
             }) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = stringResource(id = R.string.tambah_hewan)
+                    contentDescription = stringResource(id = R.string.tambah_makanan)
                 )
             }
         }
@@ -312,17 +312,17 @@ private suspend fun signOut(context: Context,dataStore: UserDataStore){
 private fun getCroppedImage(
     resolver: ContentResolver,
     result: CropImageView.CropResult
-): Bitmap ?{
-    if (!result.isSuccessful){
+): Bitmap? {
+    if (!result.isSuccessful) {
         Log.e("IMAGE", "Error: ${result.error}")
         return null
     }
-    val url = result.uriContent ?: return null
+    val uri = result.uriContent ?: return null
 
-    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P){
-        MediaStore.Images.Media.getBitmap(resolver,url)
-    } else{
-        val source = ImageDecoder.createSource(resolver,url)
+    return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+        MediaStore.Images.Media.getBitmap(resolver, uri)
+    } else {
+        val source = ImageDecoder.createSource(resolver, uri)
         ImageDecoder.decodeBitmap(source)
     }
 }

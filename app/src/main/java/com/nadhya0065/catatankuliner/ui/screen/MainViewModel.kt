@@ -48,7 +48,7 @@ class MainViewModel : ViewModel(){
                     review.toRequestBody("text/plain".toMediaTypeOrNull()),
                     bitmap.toMultipartBody()
                 )
-                if (result.status == "Succes")
+                if (result.status == "success")
                     retriveData(userId)
                 else
                     throw Exception(result.message)
