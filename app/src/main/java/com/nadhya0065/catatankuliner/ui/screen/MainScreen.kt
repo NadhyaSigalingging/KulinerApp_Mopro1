@@ -109,7 +109,7 @@ fun MainScreen() {
         if (bitmap != null) showKulinerDialog = true
     }
 
-    var editKuliner by remember { mutableStateOf<Kuliner?>(null) } // Sesuaikan tipe data
+    var editKuliner by remember { mutableStateOf<Kuliner?>(null) }
 
 
     Scaffold(
@@ -164,7 +164,7 @@ fun MainScreen() {
             modifier = Modifier.padding(innerPadding),
             onEditClicked = { kuliner ->
                 editKuliner = kuliner
-                bitmap = null // biar bisa milih gambar baru jika mau
+                bitmap = null
                 showKulinerDialog = true
             }
         )
@@ -183,7 +183,7 @@ fun MainScreen() {
     if (showKulinerDialog) {
         EditDialog(
             bitmap = bitmap,
-            imageUrl = editKuliner?.gambarUrl, // <-- tambahkan ini
+            imageUrl = editKuliner?.gambarUrl, //
             defaultNama = editKuliner?.nama_makanan ?: "",
             defaultLokasi = editKuliner?.lokasi ?: "",
             defaultReview = editKuliner?.review ?: "",
@@ -227,7 +227,7 @@ fun MainScreen() {
                         nama_makanan = nama_makanan,
                         lokasi = lokasi,
                         review = review,
-                        bitmap = gambar // null juga boleh, tidak akan error
+                        bitmap = gambar
                     )
                 }
 
