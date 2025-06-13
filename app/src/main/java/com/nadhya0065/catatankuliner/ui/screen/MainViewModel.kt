@@ -58,18 +58,14 @@ class MainViewModel : ViewModel(){
             }
         }
     }
-
-    fun deleteData(userId: String, id: String) {
-        viewModelScope.launch(Dispatchers.IO) {
+    fun deleteKuliner(idKuliner: String, userId: String) {
+        viewModelScope.launch {
             try {
-                val result = KulinerApi.service.deleteKuliner(userId, id)
-                if (result.status == "success")
-                    retriveData(userId)
-                else
-                    throw Exception(result.message)
+                KulinerApi.service.deleteKuliner(userId, idKuliner)
+                retriveData(userId)
             } catch (e: Exception) {
-                Log.d("MainViewModel", "Failure: ${e.message}")
-                errorMessage.value = "Error: ${e.message}"
+                Log.d("delete", "$idKuliner $userId")
+                errorMessage.value = "Gagal menghapus data"
             }
         }
     }

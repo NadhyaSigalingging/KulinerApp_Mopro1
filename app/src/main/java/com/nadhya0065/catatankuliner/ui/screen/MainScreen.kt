@@ -192,7 +192,7 @@ fun ScreenContent(viewModel: MainViewModel,userId: String, modifier: Modifier = 
         DialogHapus(
             onDismiss = {showDeleteDialog = false},
             onConfirm = {
-                viewModel.deleteData(seletedKuliner!!.id,userId)
+                viewModel.deleteKuliner(seletedKuliner!!.id,userId)
                 showDeleteDialog = false
             }
         )

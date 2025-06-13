@@ -47,7 +47,7 @@ interface KulinerApiService {
     @DELETE("food_review.php")
     suspend fun deleteKuliner(
         @Header("Authorization") userId: String,
-        @Query("id") kulinerId: String
+        @Query("id") idBuku: String
     ): OpStatus
 }
 
