@@ -16,15 +16,20 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,6 +81,7 @@ import com.nadhya0065.catatankuliner.BuildConfig
 import com.nadhya0065.catatankuliner.R
 import com.nadhya0065.catatankuliner.model.Kuliner
 import com.nadhya0065.catatankuliner.model.User
+import com.nadhya0065.catatankuliner.model.gambarUrl
 import com.nadhya0065.catatankuliner.network.ApiStatus
 import com.nadhya0065.catatankuliner.network.KulinerApi
 import com.nadhya0065.catatankuliner.network.UserDataStore
@@ -86,7 +92,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(){
+fun MainScreen() {
     val context = LocalContext.current
     val dataStore = UserDataStore(context)
     val user by dataStore.userFlow.collectAsState(User())
@@ -97,30 +103,29 @@ fun MainScreen(){
     var showDialog by remember { mutableStateOf(false) }
     var showKulinerDialog by remember { mutableStateOf(false) }
 
-
     var bitmap: Bitmap? by remember { mutableStateOf(null) }
     val launcher = rememberLauncherForActivityResult(CropImageContract()) {
-        bitmap = getCroppedImage(context.contentResolver,it)
-        if (bitmap != null)showKulinerDialog = true
+        bitmap = getCroppedImage(context.contentResolver, it)
+        if (bitmap != null) showKulinerDialog = true
     }
 
-    Scaffold (
+    var editKuliner by remember { mutableStateOf<Kuliner?>(null) } // Sesuaikan tipe data
+
+
+    Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(text = stringResource(id = R.string.app_name))
-                },
+                title = { Text(text = stringResource(id = R.string.app_name)) },
                 colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary,
-                    ),
+                ),
                 actions = {
                     IconButton(
                         onClick = {
                             if (user.email.isEmpty()) {
                                 CoroutineScope(Dispatchers.IO).launch { signIn(context, dataStore) }
-                            }
-                            else{
+                            } else {
                                 showDialog = true
                             }
                         }) {
@@ -135,6 +140,8 @@ fun MainScreen(){
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
+                editKuliner = null
+                bitmap = null
                 val options = CropImageContractOptions(
                     null, CropImageOptions(
                         imageSourceIncludeGallery = false,
@@ -151,48 +158,115 @@ fun MainScreen(){
             }
         }
     ) { innerPadding ->
-        ScreenContent(viewModel, user.email, Modifier.padding(innerPadding))
-    }
-        if (showDialog){
-            ProfilDialog(
-                user = user,
-                onDismissRequest = {showDialog = false}) {
-                CoroutineScope(Dispatchers.IO).launch { signOut(context,dataStore) }
-                showDialog = false
+        ScreenContent(
+            viewModel = viewModel,
+            userId = user.email,
+            modifier = Modifier.padding(innerPadding),
+            onEditClicked = { kuliner ->
+                editKuliner = kuliner
+                bitmap = null // biar bisa milih gambar baru jika mau
+                showKulinerDialog = true
             }
+        )
+    }
+
+    if (showDialog) {
+        ProfilDialog(
+            user = user,
+            onDismissRequest = { showDialog = false }
+        ) {
+            CoroutineScope(Dispatchers.IO).launch { signOut(context, dataStore) }
+            showDialog = false
         }
-        if (showKulinerDialog){
-            KulinerDialog(
-                bitmap = bitmap,
-                onDismissRequest = {showKulinerDialog = false}) {nama_makanan,lokasi,review ->
-                viewModel.saveData(user.email,nama_makanan,lokasi,review,bitmap!!)
+    }
+
+    if (showKulinerDialog) {
+        EditDialog(
+            bitmap = bitmap,
+            imageUrl = editKuliner?.gambarUrl, // <-- tambahkan ini
+            defaultNama = editKuliner?.nama_makanan ?: "",
+            defaultLokasi = editKuliner?.lokasi ?: "",
+            defaultReview = editKuliner?.review ?: "",
+            onDismissRequest = { showKulinerDialog = false },
+            onPickImage = {
+                val options = CropImageContractOptions(
+                    null,
+                    CropImageOptions(
+                        imageSourceIncludeGallery = false,
+                        imageSourceIncludeCamera = true,
+                        fixAspectRatio = true
+                    )
+                )
+                launcher.launch(options)
+            },
+            onSave = { nama_makanan, lokasi, review ->
+                val kuliner = editKuliner
+                val gambar = bitmap
+
+                if (kuliner == null) {
+                    if (gambar != null) {
+                        viewModel.saveData(
+                            userId = user.email,
+                            nama_makanan = nama_makanan,
+                            lokasi = lokasi,
+                            review = review,
+                            bitmap = gambar
+                        )
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Gambar belum dipilih!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@EditDialog
+                    }
+                } else {
+                    viewModel.editData(
+                        id = kuliner.id,
+                        userId = user.email,
+                        nama_makanan = nama_makanan,
+                        lokasi = lokasi,
+                        review = review,
+                        bitmap = gambar // null juga boleh, tidak akan error
+                    )
+                }
+
                 showKulinerDialog = false
             }
-        }
-        if (errorMessage != null){
-            Toast.makeText(context,errorMessage,Toast.LENGTH_LONG).show()
-            viewModel.clearMessage()
-        }
+
+        )
     }
 
 
+
+    if (errorMessage != null) {
+        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
+        viewModel.clearMessage()
+    }
+}
+
 @Composable
-fun ScreenContent(viewModel: MainViewModel,userId: String, modifier: Modifier = Modifier)
-{
+fun ScreenContent(
+    viewModel: MainViewModel,
+    userId: String,
+    modifier: Modifier = Modifier,
+    onEditClicked: (Kuliner) -> Unit
+) {
     var showDeleteDialog by remember { mutableStateOf(false) }
-    var seletedKuliner by remember { mutableStateOf<Kuliner?>(null) }
+    var selectedKuliner by remember { mutableStateOf<Kuliner?>(null) }
+
     val data by viewModel.data
     val status by viewModel.status.collectAsState()
 
-    LaunchedEffect (userId) {
+    LaunchedEffect(userId) {
         viewModel.retriveData(userId)
     }
 
-    if (showDeleteDialog && seletedKuliner != null){
+    if (showDeleteDialog && selectedKuliner != null) {
         DialogHapus(
-            onDismiss = {showDeleteDialog = false},
+            onDismiss = { showDeleteDialog = false },
             onConfirm = {
-                viewModel.deleteKuliner(seletedKuliner!!.id,userId)
+                viewModel.deleteKuliner(selectedKuliner!!.id, userId)
                 showDeleteDialog = false
             }
         )
@@ -200,10 +274,7 @@ fun ScreenContent(viewModel: MainViewModel,userId: String, modifier: Modifier = 
 
     when (status) {
         ApiStatus.LOADING -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ){
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -214,24 +285,27 @@ fun ScreenContent(viewModel: MainViewModel,userId: String, modifier: Modifier = 
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
                 items(data) { kuliner ->
-                    ListItem(kuliner = kuliner, onDeleteClicked ={seleted ->
-                        seletedKuliner = seleted
-                        showDeleteDialog = true
-                    })
+                    ListItem(
+                        kuliner = kuliner,
+                        onDeleteClicked = {
+                            selectedKuliner = it
+                            showDeleteDialog = true
+                        },
+                        onEditClicked = { onEditClicked(it) }
+                    )
                 }
             }
         }
         ApiStatus.FAILED -> {
-            Column (
+            Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
-            ){
+            ) {
                 Text(text = stringResource(id = R.string.error))
                 Button(
-                    onClick = {viewModel.retriveData(userId)},
-                    modifier = Modifier.padding(top = 16.dp),
-                    contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
+                    onClick = { viewModel.retriveData(userId) },
+                    modifier = Modifier.padding(top = 16.dp)
                 ) {
                     Text(text = stringResource(id = R.string.try_again))
                 }
@@ -241,58 +315,74 @@ fun ScreenContent(viewModel: MainViewModel,userId: String, modifier: Modifier = 
 }
 
 @Composable
-fun ListItem(kuliner: Kuliner, onDeleteClicked: (Kuliner) -> Unit){
+fun ListItem(
+    kuliner: Kuliner,
+    onDeleteClicked: (Kuliner) -> Unit,
+    onEditClicked: (Kuliner) -> Unit
+) {
     Box(
-        modifier = Modifier.padding(4.dp).border(1.dp, Color.Gray),
-        contentAlignment = Alignment.BottomCenter
+        modifier = Modifier
+            .padding(4.dp)
+            .border(1.dp, Color.Gray)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(KulinerApi.getKulinerUrl(kuliner.imageId))
                 .crossfade(true)
                 .build(),
-            contentDescription = stringResource(R.string.gambar,kuliner.nama_makanan),
+            contentDescription = stringResource(R.string.gambar, kuliner.nama_makanan),
             contentScale = ContentScale.Crop,
             placeholder = painterResource(id = R.drawable.loading_img),
             error = painterResource(id = R.drawable.baseline_broken_image_24),
-            modifier = Modifier.fillMaxWidth().padding(4.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
         )
-        Column (
-            modifier = Modifier.fillMaxWidth().padding(4.dp)
-                .background(Color(red = 0f, green = 0f, blue = 0f, alpha = 0.5f))
-        ) {
-            Text(
-                text = kuliner.nama_makanan,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
-            Text(
-                text = kuliner.lokasi,
-                fontStyle = FontStyle.Italic,
-                fontSize = 14.sp,
-                color = Color.White
-            )
-            Text(
-                text = kuliner.review,
-                fontStyle = FontStyle.Italic,
-                fontSize = 14.sp,
-                color = Color.White
-            )
-        }
+
         Column(
-            horizontalAlignment = Alignment.End
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .fillMaxWidth()
+                .background(Color(0f, 0f, 0f, 0.5f))
+                .padding(8.dp)
         ) {
-            IconButton(onClick = { onDeleteClicked(kuliner) }) {
+            Text(text = kuliner.nama_makanan, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(text = kuliner.lokasi, fontStyle = FontStyle.Italic, fontSize = 14.sp, color = Color.White)
+            Text(text = kuliner.review, fontStyle = FontStyle.Italic, fontSize = 14.sp, color = Color.White)
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(6.dp)
+                .background(Color(0f, 0f, 0f, 0.4f), shape = RoundedCornerShape(8.dp))
+        ) {
+            IconButton(
+                onClick = { onEditClicked(kuliner) },
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Edit",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            IconButton(
+                onClick = { onDeleteClicked(kuliner) },
+                modifier = Modifier.size(32.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = stringResource(R.string.hapus),
-                    tint = Color.White
+                    contentDescription = "Hapus",
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
-
     }
 }
+
 
 private suspend fun signIn(context: Context,dataStore: UserDataStore){
     val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()

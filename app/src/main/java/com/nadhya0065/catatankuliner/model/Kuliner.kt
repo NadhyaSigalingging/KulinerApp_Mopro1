@@ -7,3 +7,5 @@ data class Kuliner (
     val review: String,
     val imageId: String
 )
+val Kuliner.gambarUrl: String
+    get() = com.nadhya0065.catatankuliner.network.KulinerApi.getKulinerUrl(this.imageId)

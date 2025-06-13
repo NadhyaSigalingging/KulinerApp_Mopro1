@@ -14,4 +14,10 @@
     <string name="simpan">Simpan</string>
     <string name="hapus">Hapus</string>
     <string name="pesan_hapus">Anda yakin ingin menghapus hewan ini?</string>
+    <string name="edit_makanan">Edit Makanan</string>
+    <string name="nama_makanan">Nama Makanan</string>
+    <string name="preview_gambar">Preview Gambar</string>
+    <string name="input_kosong">Semua kolom harus diisi</string>
+    <string name="ganti_foto">Ganti Foto</string>
+    <string name="pilih_foto">Pilih Foto</string>
 </resources>

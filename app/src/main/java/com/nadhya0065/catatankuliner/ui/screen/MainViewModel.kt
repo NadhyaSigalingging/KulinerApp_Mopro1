@@ -16,70 +16,121 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
 
-class MainViewModel : ViewModel(){
+class MainViewModel : ViewModel() {
 
     var data = mutableStateOf(emptyList<Kuliner>())
-
     var status = MutableStateFlow(ApiStatus.LOADING)
         private set
 
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    fun retriveData(userId: String){
+    fun retriveData(userId: String) {
         viewModelScope.launch(Dispatchers.IO) {
             status.value = ApiStatus.LOADING
             try {
                 data.value = KulinerApi.service.getKuliner(userId)
                 status.value = ApiStatus.SUCCESS
-            } catch (e: Exception){
-                Log.d("MainViewModel", "Failure: ${e.message}")
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Failure: ${e.message}")
                 status.value = ApiStatus.FAILED
             }
         }
     }
-    fun saveData(userId: String,nama_makanan:String,lokasi: String,review: String,bitmap: Bitmap){
-        viewModelScope.launch (Dispatchers.IO){
+
+    fun saveData(
+        userId: String,
+        nama_makanan: String,
+        lokasi: String,
+        review: String,
+        bitmap: Bitmap
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = KulinerApi.service.postKuliner(
                     userId,
                     nama_makanan.toRequestBody("text/plain".toMediaTypeOrNull()),
                     lokasi.toRequestBody("text/plain".toMediaTypeOrNull()),
                     review.toRequestBody("text/plain".toMediaTypeOrNull()),
-                    bitmap.toMultipartBody()
+                    bitmap.toMultipart("image")
                 )
-                if (result.status == "success")
+                if (result.status == "success") {
                     retriveData(userId)
-                else
+                } else {
                     throw Exception(result.message)
-            }catch (e: Exception){
-                Log.d("MainViewModel", "Failure: ${e.message}")
+                }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Failure: ${e.message}")
                 errorMessage.value = "Error: ${e.message}"
             }
         }
     }
+
+    fun editData(
+        id: String,
+        userId: String,
+        nama_makanan: String,
+        lokasi: String,
+        review: String,
+        bitmap: Bitmap?
+    ) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val result = if (bitmap != null) {
+                    // Dengan gambar baru
+                    KulinerApi.service.editKulinerWithImage(
+                        userId = userId,
+                        id = id.toRequestBody("text/plain".toMediaTypeOrNull()),
+                        nama_makanan = nama_makanan.toRequestBody("text/plain".toMediaTypeOrNull()),
+                        lokasi = lokasi.toRequestBody("text/plain".toMediaTypeOrNull()),
+                        review = review.toRequestBody("text/plain".toMediaTypeOrNull()),
+                        image = bitmap.toMultipart("image")
+                    )
+                } else {
+                    // Tanpa gambar baru
+                    KulinerApi.service.editKulinerWithoutImage(
+                        userId = userId,
+                        id = id,
+                        nama_makanan = nama_makanan,
+                        lokasi = lokasi,
+                        review = review
+                    )
+                }
+
+                if (result.status == "success") {
+                    retriveData(userId)
+                } else {
+                    throw Exception(result.message)
+                }
+
+            } catch (e: Exception) {
+                Log.e("EDIT_ERROR", "Gagal edit data", e)
+                errorMessage.value = "Error: ${e.message}"
+            }
+        }
+    }
+
     fun deleteKuliner(idKuliner: String, userId: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
                 KulinerApi.service.deleteKuliner(userId, idKuliner)
                 retriveData(userId)
             } catch (e: Exception) {
-                Log.d("delete", "$idKuliner $userId")
+                Log.e("DELETE_ERROR", "Gagal hapus data: $idKuliner", e)
                 errorMessage.value = "Gagal menghapus data"
             }
         }
     }
 
-    private fun Bitmap.toMultipartBody(): MultipartBody.Part {
+    private fun Bitmap.toMultipart(paramName: String): MultipartBody.Part {
         val stream = ByteArrayOutputStream()
-        compress(Bitmap.CompressFormat.JPEG, 80, stream)
+        this.compress(Bitmap.CompressFormat.JPEG, 90, stream)
         val byteArray = stream.toByteArray()
-        val requestBody = byteArray.toRequestBody(
-            "image/jpg".toMediaTypeOrNull(), 0, byteArray.size)
-        return MultipartBody.Part.createFormData(
-            "image", "image.jpg", requestBody
-        )
+        val requestBody = byteArray.toRequestBody("image/*".toMediaTypeOrNull())
+        return MultipartBody.Part.createFormData(paramName, "$paramName.jpg", requestBody)
     }
 
-    fun clearMessage() { errorMessage.value=null}
+    fun clearMessage() {
+        errorMessage.value = null
+    }
 }
