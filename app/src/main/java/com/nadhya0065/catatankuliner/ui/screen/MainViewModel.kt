@@ -77,7 +77,6 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val result = if (bitmap != null) {
-                    // Dengan gambar baru
                     KulinerApi.service.editKulinerWithImage(
                         userId = userId,
                         id = id.toRequestBody("text/plain".toMediaTypeOrNull()),
@@ -87,7 +86,6 @@ class MainViewModel : ViewModel() {
                         image = bitmap.toMultipart("image")
                     )
                 } else {
-                    // Tanpa gambar baru
                     KulinerApi.service.editKulinerWithoutImage(
                         userId = userId,
                         id = id,
